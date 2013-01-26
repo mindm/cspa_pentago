@@ -17,29 +17,24 @@ class BoardGrid:
     
                 s = str(loop)
                 loop += 1
-                #s = "{0},{1}".format(i, j)
+                
                 b = Button(frame, text=s, state=DISABLED, height=2, width=2)
                 b.grid(row=i, column=j)
                 self.arr.append(b)
     
-    def update(array):
+    def update(self, array):
         if len(array) != 36:
             raise Exception('Array length should be 36!')
         else: 
             loop = 0
             for i in range(6):
                 for j in range(6):
-                    arr[loop].config(text=array[loop])
+                    self.arr[loop].config(text=array[loop])
+                    loop += 1
+            print("done")
         
 
 
-def change_labels(array):
-    if len(array) != 36:
-        raise Exception('Array length should be 36!')
-    else: 
-        for i in range(6):
-            for j in range(6):
-                pass
 
 root = Tk()
 
@@ -54,7 +49,12 @@ filemenu.add_command(label='Exit', command=quit)
 base = Frame(root)
 
 grid_item = BoardGrid(base)
-
+####
+arrtest=[]
+for i in range(36):
+    arrtest.append("X")
+grid_item.update(arrtest)
+####
 base.pack()
 
 mainloop()
