@@ -95,7 +95,11 @@ class BoardGrid:
                     self.arr[loop].config(text=array[loop])
                     loop += 1
 
-        
+    def enable(self):
+        enable_buttons(self.arr)
+    
+    def disable(self):
+        disable_buttons(self.arr)
 
 
 
@@ -122,7 +126,8 @@ root.geometry("300x360+300+300")
 
 base.place(relx=0.5, rely=0.5, anchor=CENTER)
 
-disable_buttons(btn_array)
+#disable_buttons(btn_array)
+grid_item.enable()
 
 mainloop()
 
