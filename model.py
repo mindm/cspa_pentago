@@ -144,7 +144,12 @@ class GameLogic:
 	def print_board(self):
 		print (self.board)
 
-game = GameLogic()
-game.place_marble(3,3,1)
-print ("")
-game.rotate_sub_board(3,1)
+def main():
+
+	game = GameLogic()
+	game.place_marble(3,3,1)
+	print ("")
+	game.rotate_sub_board(3,1)
+
+if __name__ == "__main__":
+	main()
