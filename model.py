@@ -11,13 +11,12 @@ class GameLogic:
 					[ 0,  0,  0,  0,  0, 0]])
 
 	def place_marble(self,x,y,color):
-		if self.board[x,y] == 0:
+		if self.valid_move(x, y):
 			self.board[x,y] = color
 			self.print_board()
 			self.win_condition()
 		else:
-			self.invalid_move()
-
+			pass
 	def rotate_sub_board(self, sub_board, direction):
 		#rotate upper left corner
 		if sub_board == 0:
@@ -137,9 +136,14 @@ class GameLogic:
 		#check after each place_marble and rotate_sub_board
 		pass
 
-	def invalid_move(self):
+	def valid_move(self, x, y):
 		#if place is not 0 it's taken and the move is invalid
-		print("Invalid move")
+		if self.board[x][y] != 0:
+			print("Invalid move")			
+			return False
+		else:
+			return True
+		
 
 	def print_board(self):
 		print (self.board)
@@ -150,6 +154,8 @@ def main():
 	game.place_marble(3,3,1)
 	print ("")
 	game.rotate_sub_board(3,1)
+	print("")
+	game.place_marble(5,3,1)
 
 if __name__ == "__main__":
 	main()
