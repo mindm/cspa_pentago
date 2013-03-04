@@ -13,42 +13,6 @@ def rotate(id_):
     print("clicked btn {0}".format(id_))
 
 
-def buttonfactory(frame, label, x_, y_, id_):
-    b = Button(frame, text=label, command=lambda: rotate(id_))
-    b.place(x=x_, y=y_)
-    return b
-
-def initbuttons(frame):
-
-    x_array = [30,80,170,220,30,80,170,220]
-    y_array = [15,15,15,15,316,316,316,316]
-    text_array = ["<-", "->", "<-", "->", "<-", "->", "<-", "->"]
-    btn_array = []
-    
-    for i in range(8):
-        
-        btn_array.append(buttonfactory(frame, text_array[i], x_array[i], y_array[i], i ))
-    
-    return btn_array
-    
-
-def disable_buttons(arr):
-
-    if type(arr) is not list:
-        raise Exception("Argument should be a list!")
-        
-    for i in range(len(arr)):
-        arr[i].config(state=DISABLED)
-        
-def enable_buttons(arr):
-
-    if type(arr) is not list:
-        raise Exception("Argument should be a list!")
-        
-    for i in range(len(arr)):
-        arr[i].config(state=NORMAL)
-
-
 #Class for the board, includes sub-boards
 # and grids for those boards
 class BoardGrid:
@@ -96,10 +60,28 @@ class BoardGrid:
                     loop += 1
 
     def enable(self):
-        enable_buttons(self.arr)
+        self.enable_buttons(self.arr)
     
     def disable(self):
-        disable_buttons(self.arr)
+        self.disable_buttons(self.arr)
+
+    def disable_buttons(self, arr):
+
+        if type(arr) is not list:
+            raise Exception("Argument should be a list!")
+            
+        for i in range(len(arr)):
+            arr[i].config(state=DISABLED)
+        
+    def enable_buttons(self, arr):
+
+        if type(arr) is not list:
+            raise Exception("Argument should be a list!")
+            
+        for i in range(len(arr)):
+            arr[i].config(state=NORMAL)
+
+
 
 class View(Toplevel):
     def __init__(self, root):
@@ -114,7 +96,7 @@ class View(Toplevel):
 
         #creating rotate buttons
 
-        self.btn_array = initbuttons(root)
+        self.btn_array = self.initbuttons(root)
         self.base = Frame(root)
 
 
@@ -133,13 +115,31 @@ class View(Toplevel):
         self.grid_item.disable()
 
     def enable_rotate(self):
-        enable_buttons(self.btn_array)
+        self.grid_item.enable_buttons(self.btn_array)
 
     def disable_rotate(self):
-        disable_buttons(self.btn_array)
+        self.grid_item.disable_buttons(self.btn_array)
         
     def update(self, array):
         self.grid_item.update(array)
+
+    def buttonfactory(self, frame, label, x_, y_, id_):
+        b = Button(frame, text=label, command=lambda: rotate(id_))
+        b.place(x=x_, y=y_)
+        return b
+
+    def initbuttons(self, frame):
+
+        x_array = [30,80,170,220,30,80,170,220]
+        y_array = [15,15,15,15,316,316,316,316]
+        text_array = ["<-", "->", "<-", "->", "<-", "->", "<-", "->"]
+        btn_array = []
+        
+        for i in range(8):
+            
+            btn_array.append(self.buttonfactory(frame, text_array[i], x_array[i], y_array[i], i ))
+        
+        return btn_array
 
     
 def main():
