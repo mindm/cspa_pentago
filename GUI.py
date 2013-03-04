@@ -1,18 +1,17 @@
-#!/usr/bin/python3.2
+#!/usr/bin/python
 # -*- coding: iso-8859-15 -*-
 
 from tkinter import *
 import math
-from controller import *
 
 #Quit method
-def quit():
-    root.quit()
+def quit(root):
+    root.destroy()
 
 #Listens for button events
 def rotate(id_):
     print("clicked btn {0}".format(id_))
-    #rotate_call(id_)
+
 
 def buttonfactory(frame, label, x_, y_, id_):
     b = Button(frame, text=label, command=lambda: rotate(id_))
@@ -32,7 +31,7 @@ def initbuttons(frame):
     
     return btn_array
     
-#disable all buttons of given list
+
 def disable_buttons(arr):
 
     if type(arr) is not list:
@@ -40,8 +39,7 @@ def disable_buttons(arr):
         
     for i in range(len(arr)):
         arr[i].config(state=DISABLED)
-       
-#disable all buttons of given list 
+        
 def enable_buttons(arr):
 
     if type(arr) is not list:
@@ -52,7 +50,7 @@ def enable_buttons(arr):
 
 
 #Class for the board, includes sub-boards
-#   and grids for those boards 
+# and grids for those boards
 class BoardGrid:
 
     def __init__(self, frame):
@@ -90,7 +88,7 @@ class BoardGrid:
     def update(self, array):
         if len(array) != 36:
             raise Exception('Array length should be 36!')
-        else: 
+        else:
             loop = 0
             for i in range(6):
                 for j in range(6):
@@ -103,34 +101,59 @@ class BoardGrid:
     def disable(self):
         disable_buttons(self.arr)
 
-    def place_piece(self, num): 
-        self.arr[num] = "X"
+class View(Toplevel):
+    def __init__(self, root):
+        # creating menu
+        self.menu = Menu(root)
+        root.config(menu=self.menu)
 
-#root = Tk()
-
-# creating menu
-#menu = Menu(root)
-#root.config(menu=menu)
-
-#filemenu = Menu(menu)
-#menu.add_cascade(label='File', menu=filemenu, background="#C4C4C4")
-#filemenu.add_command(label='Exit', command=quit)
+        self.filemenu = Menu(self.menu)
+        self.menu.add_cascade(label='File', menu=self.filemenu, background="#C4C4C4")
+        self.filemenu.add_command(label='Exit', command=lambda root=root:quit(root))
 
 
-#creating rotate buttons
+        #creating rotate buttons
 
-#btn_array = initbuttons(root)
-#base = Frame(root)
+        self.btn_array = initbuttons(root)
+        self.base = Frame(root)
 
 
-#grid_item = BoardGrid(base)
+        self.grid_item = BoardGrid(self.base)
 
-#root.geometry("300x360+300+300")
+        root.geometry("300x360+300+300")
 
-#base.place(relx=0.5, rely=0.5, anchor=CENTER)
+        self.base.place(relx=0.5, rely=0.5, anchor=CENTER)
 
-#disable_buttons(btn_array)
-#grid_item.enable()
+        #disable_buttons(btn_array)
 
-#mainloop()
+    def enable_grid(self):
+        self.grid_item.enable()
 
+    def disable_grid(self):
+        self.grid_item.disable()
+
+    def enable_rotate(self):
+        enable_buttons(self.btn_array)
+
+    def disable_rotate(self):
+        disable_buttons(self.btn_array)
+        
+    def update(self, array):
+        self.grid_item.update(array)
+
+    
+def main():
+    global root
+    root = Tk()
+    view = View(root)
+    view.disable_rotate()
+
+    arr = []
+    for i in range(36):
+        arr.append("i")
+    view.update(arr)
+
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
