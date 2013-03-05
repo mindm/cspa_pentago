@@ -4,6 +4,26 @@ import numpy
 import sys
 from collections import defaultdict
 
+class Observable:
+    def __init__(self):
+        self.callbacks = {}
+        self.pressed = None
+
+    def addCallback(self, func):
+        self.callbacks[func] = 1
+
+    def del_callback(self, func):
+        del self.callbacks[func]
+
+    def _doCallbacks(self):
+        for func in self.callbacks:
+            func(self.pressed)
+
+
+
+
+
+
 class GameLogic:
     def __init__(self): 
         self.board = numpy.array([[ 0,  0,  0,  0,  0, 0],
@@ -14,8 +34,8 @@ class GameLogic:
                     [ 0,  0,  0,  0,  0, 0]])
 
     def place_marble(self,x,y,color):
-        if self.valid_move(x, y):
-            self.board[x,y] = color
+        if self.valid_move(y, x):
+            self.board[y][x] = color
             self.print_board()
             if self.win_condition() != 0:
                 print("{} has won!".format(self.win_condition()))
@@ -157,7 +177,7 @@ class GameLogic:
                         win = self.board[i][j]
                         break
                     else:
-                        temp[self.board[i][j]] = 0
+                        temp = defaultdict(int)
             
             for j in range(2):
                 if self.board[j][i] != 0:
@@ -167,11 +187,11 @@ class GameLogic:
                         win = self.board[j][i]
                         break
                     else:
-                        temp[self.board[j][i]] = 0
+                        temp = defaultdict(int)
 
         #checking diagonals
         t_points = [[0,0], [1, 1], [0,1], [1,0]]
-        u_points = [[0,5], [1, 4], [0,4], [1,5]]
+        b_points = [[0,5], [1, 4], [0,4], [1,5]]
 
         for [i, j] in t_points:
             if win != 0:
@@ -183,9 +203,9 @@ class GameLogic:
                         win = self.board[i][j]
                         break
                 else:
-                    temp[self.board[i][j]] = 0
+                    temp = defaultdict(int)
 
-        for [i, j] in u_points:
+        for [i, j] in b_points:
             if win != 0:
                 return win
             if self.board[i][j] != 0:
@@ -195,7 +215,7 @@ class GameLogic:
                         win = self.board[i][j]
                         break
                 else:
-                    temp[self.board[i][j]] = 0
+                    temp = defaultdict(int)
 
                 
 
@@ -205,7 +225,7 @@ class GameLogic:
     def valid_move(self, x, y):
         #if place is not 0 it's taken and the move is invalid
         if self.board[x][y] != 0:
-            print("Invalid move")            
+            print("Invalid move")
             return False
         else:
             return True
@@ -214,15 +234,24 @@ class GameLogic:
     def print_board(self):
         print (self.board)
 
-#def main():
+    def get_board(self):
+        arr = []
+        for x in range(6):
+            for y in range(6):
+                arr.append(self.board[x][y])
+        return arr
 
-    #game = GameLogic()
-    #game.place_marble(4,0,1)
+def main():
+
+    game = GameLogic()
+    game.place_marble(1,1,1)
+    game.place_marble(1,3,1)
+    game.place_marble(1,2,1)
     #game.rotate_sub_board(3,1)
-    #game.place_marble(3,1,1)
-    #game.place_marble(2,2,1)
-    #game.place_marble(1,3,1)
-    #game.place_marble(0,4,1)
+    # game.place_marble(3,1,1)
+    # game.place_marble(2,2,1)
+    # game.place_marble(1,3,1)
+    # game.place_marble(0,4,1)
     #game.place_marble(5,5,1)
-#if __name__ == "__main__":
-   #main()
+if __name__ == "__main__":
+    main()

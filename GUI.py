@@ -45,7 +45,7 @@ class BoardGrid:
                 else:
                     sb = self.f[3]
                 
-                b = Button(sb, text=s, state=DISABLED, height=2, width=2)
+                b = Button(sb, text="0", state=DISABLED, height=2, width=2)
                 b.grid(row=i%3, column=j%3)
                 self.arr.append(b)
     
@@ -80,6 +80,9 @@ class BoardGrid:
             
         for i in range(len(arr)):
             arr[i].config(state=NORMAL)
+
+    def get_buttons(self):
+        return self.arr
 
 
 
@@ -141,17 +144,22 @@ class View(Toplevel):
         
         return btn_array
 
+    def get_grid_btns(self):
+        return self.grid_item.get_buttons()
+
+    def get_rotate_btns(self):
+        return self.btn_array
     
 def main():
-    global root
     root = Tk()
     view = View(root)
-    view.disable_rotate()
+    # view.disable_rotate()
+    view.enable_grid()
 
-    arr = []
-    for i in range(36):
-        arr.append("i")
-    view.update(arr)
+    # arr = []
+    # for i in range(36):
+    #     arr.append("i")
+    # view.update(arr)
 
     root.mainloop()
 

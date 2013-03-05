@@ -4,43 +4,50 @@
 import sys
 from collections import defaultdict
 from model import GameLogic
-from GUI import *
+from GUI import View
+from states import GameState
+from tkinter import *
 
 class GameController:
     def __init__(self):
         # create game board
         self.game = GameLogic()
-        self.game.place_marble(2,2,1)
+        self.state = GameState()
+
+        
 
 	    # create GUI
         root = Tk()
+        self.view = View(root)
 
-	    # creating menu
-        menu = Menu(root)
-        root.config(menu=menu)
+        grid_btn_array = self.view.get_grid_btns()
+        i = 0
+        for btn in grid_btn_array:
+            btn.config(command=lambda x=i: self.callback(x))
+            i += 1
 
-        filemenu = Menu(menu)
-        menu.add_cascade(label='File', menu=filemenu, background="#C4C4C4")
-        filemenu.add_command(label='Exit', command=quit)
-
-	    #creating rotate buttons
-        btn_array = initbuttons(root)
-        base = Frame(root)
-
-        grid_item = BoardGrid(base)
-
-        root.geometry("300x360+300+300")
-
-        base.place(relx=0.5, rely=0.5, anchor=CENTER)
-
-        # disable sub-board rotation and enable grid buttons
-        #disable_buttons(btn_array)
-        grid_item.enable()
-        mainloop()
+        self.view.enable_grid()
+        root.mainloop()
 
     # call from rotate button, rotate board on model and update GUI
     def rotate_call(self, board):
         self.rotate_sub_board(0, 0) #upper left sub-board to right - for testing
+
+    def callback(self, id):
+        x = id % 6
+        y = int(id / 6)
+        print("Clicked grid button {}, {}".format(x, y))
+
+        if self.state.getState() == "P1":
+            self.game.place_marble(x, y, 1)
+            self.state.setState("P2")
+        elif self.state.getState() == "P2":
+            self.game.place_marble(x, y, 2)
+            self.state.setState("P1")
+        
+
+        board = self.game.get_board()
+        self.view.update(board)
 
 def main():
     newgame = GameController()
