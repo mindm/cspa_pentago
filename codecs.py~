@@ -15,8 +15,6 @@ from interfaces import IGameCommClientPdu, IGameCommServerPdu
 7 – rotate_board_pdu
 """
 
-# copied from example; names, variables and values need fixing
-
 class ClientPduCodec(IGameCommClientPdu):
 
   def __init__(self,entity):
