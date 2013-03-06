@@ -53,9 +53,17 @@ class GameController:
         if self.state.getState() == "WAIT_P1_M_PLACE":
             self.game.place_marble(x, y, 1)
             self.state.setState("WAIT_P1_ROTATE")
+            win = self.game.win_condition()
+            if win != 0:
+                print ("Player {} won!".format(win))
+                self.state.setState("STOP")
         elif self.state.getState() == "WAIT_P2_M_PLACE":
             self.game.place_marble(x, y, 2)
             self.state.setState("WAIT_P2_ROTATE")
+            win = self.game.win_condition()
+            if win != 0:
+                print ("Player {} won!".format(win))
+                self.state.setState("STOP")
         
 
         board = self.game.get_board()
@@ -69,12 +77,20 @@ class GameController:
                 self.state.setState("WAIT_P2_M_PLACE")
             except Exception as e:
                 print(e)
+            win = self.game.win_condition()
+            if win != 0:
+                print ("Player {} won!".format(win))
+                self.state.setState("STOP")
         if self.state.getState() == "WAIT_P2_ROTATE":
             try:
                 self.game.rotate_sub_board(*self.rotate_params[id])
                 self.state.setState("WAIT_P1_M_PLACE")
             except Exception as e:
                 print(e)
+            win = self.game.win_condition()
+            if win != 0:
+                print ("Player {} won!".format(win))
+                self.state.setState("STOP")
 
         board = self.game.get_board()
         self.view.update(board)
