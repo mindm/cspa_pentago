@@ -127,7 +127,7 @@ class View(Toplevel):
         self.grid_item.update(array)
 
     def buttonfactory(self, frame, label, x_, y_, id_):
-        b = Button(frame, text=label, command=lambda: rotate(id_))
+        b = Button(frame, text=label ) #command=lambda: rotate(id_) 
         b.place(x=x_, y=y_)
         return b
 

@@ -36,12 +36,9 @@ class GameLogic:
     def place_marble(self,x,y,color):
         if self.valid_move(y, x):
             self.board[y][x] = color
-            self.print_board()
-            if self.win_condition() != 0:
-                print("{} has won!".format(self.win_condition()))
-                sys.exit(0)
+            # self.print_board()
         else:
-            pass
+            raise Exception('invalid_move')
     def rotate_sub_board(self, sub_board, direction):
         #rotate upper left corner
         if sub_board == 0:
@@ -155,8 +152,6 @@ class GameLogic:
                 rotate[1]  = rotate2
                 self.board = numpy.concatenate((rotate[0],rotate[1]),1)
                 self.print_board()
-        if self.win_condition():
-            pass
             
     def win_condition(self):
         #when five marbles of same color aling
@@ -225,7 +220,7 @@ class GameLogic:
     def valid_move(self, x, y):
         #if place is not 0 it's taken and the move is invalid
         if self.board[x][y] != 0:
-            print("Invalid move")
+            #print("Invalid move")
             return False
         else:
             return True

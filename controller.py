@@ -14,8 +14,14 @@ class GameController:
         self.game = GameLogic()
         self.state = GameState()
 
-        
-
+        self.rotate_params = {  0: [0, 1],
+                                1: [0, 0],
+                                2: [1, 1],
+                                3: [1, 0],
+                                4: [2, 1],
+                                5: [2, 0],
+                                6: [3, 1],
+                                7: [3, 0] }
 	    # create GUI
         root = Tk()
         self.view = View(root)
@@ -24,6 +30,12 @@ class GameController:
         i = 0
         for btn in grid_btn_array:
             btn.config(command=lambda x=i: self.callback(x))
+            i += 1
+
+        rotate_btn_array = self.view.get_rotate_btns()
+        i=0
+        for btn in rotate_btn_array:
+            btn.config(command=lambda x=i: self.rotate_callback(x))
             i += 1
 
         self.view.enable_grid()
@@ -38,16 +50,35 @@ class GameController:
         y = int(id / 6)
         print("Clicked grid button {}, {}".format(x, y))
 
-        if self.state.getState() == "P1":
+        if self.state.getState() == "WAIT_P1_M_PLACE":
             self.game.place_marble(x, y, 1)
-            self.state.setState("P2")
-        elif self.state.getState() == "P2":
+            self.state.setState("WAIT_P1_ROTATE")
+        elif self.state.getState() == "WAIT_P2_M_PLACE":
             self.game.place_marble(x, y, 2)
-            self.state.setState("P1")
+            self.state.setState("WAIT_P2_ROTATE")
         
 
         board = self.game.get_board()
         self.view.update(board)
+
+    def rotate_callback(self, id):
+        print("Clicked btn {}".format(id))
+        if self.state.getState() == "WAIT_P1_ROTATE":
+            try:
+                self.game.rotate_sub_board(*self.rotate_params[id])
+                self.state.setState("WAIT_P2_M_PLACE")
+            except Exception as e:
+                print(e)
+        if self.state.getState() == "WAIT_P2_ROTATE":
+            try:
+                self.game.rotate_sub_board(*self.rotate_params[id])
+                self.state.setState("WAIT_P1_M_PLACE")
+            except Exception as e:
+                print(e)
+
+        board = self.game.get_board()
+        self.view.update(board)
+
 
 def main():
     newgame = GameController()
