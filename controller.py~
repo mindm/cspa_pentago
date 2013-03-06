@@ -42,8 +42,8 @@ class GameController:
         root.mainloop()
 
     # call from rotate button, rotate board on model and update GUI
-    #def rotate_call(self, board):
-        #self.rotate_sub_board(0, 0) #upper left sub-board to right - for testing
+    def rotate_call(self, board):
+        self.rotate_sub_board(0, 0) #upper left sub-board to right - for testing
 
     def callback(self, id):
         x = id % 6
