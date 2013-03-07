@@ -32,6 +32,7 @@ class GameLogic:
                     [ 0,  0,  0,  0,  0, 0],
                     [ 0,  0,  0,  0,  0, 0],
                     [ 0,  0,  0,  0,  0, 0]])
+        self.trans_array = {0 : " ", 1 : "X", 2 : "O"}
 
     def place_marble(self,x,y,color):
         if self.valid_move(y, x):
@@ -233,7 +234,7 @@ class GameLogic:
         arr = []
         for x in range(6):
             for y in range(6):
-                arr.append(self.board[x][y])
+                arr.append(self.trans_array[self.board[x][y]])
         return arr
 
 def main():

@@ -2,6 +2,7 @@
 # -*- coding: iso-8859-15 -*-
 
 from tkinter import *
+from tkinter import messagebox
 import math
 
 #Quit method
@@ -45,7 +46,7 @@ class BoardGrid:
                 else:
                     sb = self.f[3]
                 
-                b = Button(sb, text="0", state=DISABLED, height=2, width=2)
+                b = Button(sb, text=" ", state=DISABLED, height=2, width=2)
                 b.grid(row=i%3, column=j%3)
                 self.arr.append(b)
     
@@ -105,9 +106,15 @@ class View(Toplevel):
 
         self.grid_item = BoardGrid(self.base)
 
-        root.geometry("300x360+300+300")
+        root.geometry("360x365+300+300")
 
         self.base.place(relx=0.5, rely=0.5, anchor=CENTER)
+
+        self.infobar = Frame(root)
+        self.infobar.pack(side=BOTTOM)
+
+        self.infotext = Label(self.infobar, text="Hi!")
+        self.infotext.pack()
 
         #disable_buttons(btn_array)
 
@@ -133,8 +140,8 @@ class View(Toplevel):
 
     def initbuttons(self, frame):
 
-        x_array = [30,80,170,220,30,80,170,220]
-        y_array = [15,15,15,15,316,316,316,316]
+        x_array = [65, 115, 205, 255, 65, 115, 205, 255]
+        y_array = [17.5, 17.5, 17.5, 17.5, 318.5, 318.5, 318.5, 318.5]
         text_array = ["<-", "->", "<-", "->", "<-", "->", "<-", "->"]
         btn_array = []
         
@@ -149,6 +156,12 @@ class View(Toplevel):
 
     def get_rotate_btns(self):
         return self.btn_array
+
+    def set_infotext(self, text):
+        self.infotext.config(text=text)
+
+    def popup(self, text):
+        messagebox.showinfo("Game Over", text)
     
 def main():
     root = Tk()
