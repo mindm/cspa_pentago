@@ -6,57 +6,49 @@ from abc import ABCMeta, abstractmethod # http://docs.python.org/3/library/abc.h
 # Client interfaces
 
 class IGameCommClientReq(metaclass=ABCMeta):
-  
-  # game name not in specs, add there or remove?
+
   @abstractmethod
-  def look_game_req(self, addr:str, port:int, name:str):
+  def look_game_req(self, game_id):
     """ Player is looking for game.
-    addr as str as ip/dns address
-    port as int 
-    name as str 
+    game_id as uint32 
     """
       
   @abstractmethod
   def m_place_req(self, x, y):
     """ Player places a game piece.
-    x and y as int 
+    x as uint32 
+    y as uint32
     """
 
   @abstractmethod
   def rotate_board_req(self, board, direction):
     """ Player rotates sub-board
-    subboard and direction as int 
+    board as uint32
+    direction as uint8 
     """
         
 class IGameCommClientInd(metaclass=ABCMeta):
   
   @abstractmethod
-  def start_game_ind(self, peer_name, mark):
+  def start_game_ind(self):
     """ Player is informed of starting game.
-    peer_name as str
-    mark as str 
     """
 
   @abstractmethod
-  def game_end_ind(self, result):
+  def game_end_ind(self, end_status):
     """ Game ends; win, lose or draw.
-    result as int 
+    end_status as uint32
     """       
  
   @abstractmethod
-  def update_board_ind(self, board):
+  def update_board_ind(self, board_info):
     """ Board update from server.
-    board as int  
+    board_info as string  
     """
-    # should the board be sent as list?
-        
+
   @abstractmethod
-  def invalid_move_ind(self, code, reason):
+  def invalid_move_ind(self):
     """ Game logic error.
-    code as int where
-      100 out of board bounds
-      101 unit already in position
-    reason as string 
     """
 
   @abstractmethod
@@ -67,22 +59,30 @@ class IGameCommClientInd(metaclass=ABCMeta):
 class IGameCommClientPdu(metaclass=ABCMeta):
 
   @abstractmethod
-  def look_game_pdu(self,peer_name, mark):
-    """ Client looking for game.
-    peer_name as str
-    mark as str  
+  def start_game_pdu(self):
+    """ PDU for player looking a new game.
     """
 
   @abstractmethod
-  def m_place_pdu(self, x, y):
-    """ Client sends placement data.
-    x and y as int 
+  def game_end_pdu(self, end_status):
+    """ PDU for end game information.
+    end_status as uint32
     """
 
   @abstractmethod
-  def rotate_board_pdu(self, subboard, direction):
-    """ Client sends rotation data.
-    board and direction as int 
+  def update_board_pdu(self, board_info):
+    """ PDU for player move.
+    board_info as string
+    """
+
+  @abstractmethod
+  def invalid_move_pdu(self):
+    """ PDU for move againsta game logic.
+    """
+
+  @abstractmethod
+  def your_turn_pdu(self):
+    """ PDU for players turn.
     """
 
 # Server interfaces     
@@ -90,24 +90,22 @@ class IGameCommClientPdu(metaclass=ABCMeta):
 class IGameCommServerReq(metaclass=ABCMeta):
 
   @abstractmethod
-  def game_end_req(self, result):
+  def game_end_req(self, end_status):
     """ End condition is met  
-    result as int
+    end_status as uint32
     """
 
   @abstractmethod
-  def update_board_req(self, board):
+  def update_board_req(self, board_info):
     """ Game logic tells the server to send new board to client.
-    board as int
+    board_info as string
     """
 
   @abstractmethod
-  def invalid_move_req(self, code, reason):
+  def invalid_move_req(self):
     """ Game logic tells the server that the move was invalid  
-    code as int
-    reason as string
     """
-    
+
 class IGameCommServerInd(metaclass=ABCMeta):
 
   @abstractmethod
@@ -116,49 +114,39 @@ class IGameCommServerInd(metaclass=ABCMeta):
     """
     
   @abstractmethod
-  def m_place_ind(self, x, y, color):
+  def m_place_ind(self, x, y):
     """ Server tells game logic about new game piece placement.  
-    x as int
-    y as int
-    color as int
+    x as uint32
+    y as uint32
     """
 
   @abstractmethod
-  def rotate_board_ind(self, subboard, direction):
+  def rotate_board_ind(self, board, direction):
     """ Server tells game logic about sub-board rotation.
-    subboard and direction as int
+    board as uint32
+    direction as uint8
     """
 
 class IGameCommServerPdu(metaclass=ABCMeta):
   
-  @abstractmethod
-  def start_game_pdu(self, name):
-    """ PDU for player looking a new game.
-    name as string 
+ @abstractmethod
+  def look_game_pdu(self, game_id):
+    """ Client looking for game.
+    game_id as uint32
     """
 
   @abstractmethod
-  def game_end_pdu(self, result):
-    """ PDU for end game information.
-    result as int
+  def m_place_pdu(self, x, y):
+    """ Client sends placement data.
+    x as uint32 
+    y as uint32 
     """
 
   @abstractmethod
-  def update_board_pdu(self, board):
-    """ PDU for player move.
-    board as int
-    """
-
-  @abstractmethod
-  def invalid_move_pdu(self, code, reason):
-    """ PDU for move againsta game logic.
-    code as int
-    reason as string
-    """
-
-  @abstractmethod
-  def your_turn_pdu(self):
-    """ PDU for players turn.
+  def rotate_board_pdu(self, board, direction):
+    """ Client sends rotation data.
+    board as uint32
+    direction as uint8
     """
 
 # Transport, Tcp Interfaces    
@@ -166,59 +154,43 @@ class IGameCommServerPdu(metaclass=ABCMeta):
 class ITransReq(metaclass=ABCMeta):
   
   @abstractmethod
-  def send(self, cid, data):
+  def send(self):
     """ Send data to peer.
-    is as int -- connection cid
-    data as bytes
     """
     
   @abstractmethod
-  def open_connection(self, address, port):
+  def open_connection(self):
     """ Open connection.
-    address as str
-    port as int 
     """
 
   @abstractmethod
-  def close_connection(self, cid):
+  def close_connection(self):
     """ Close connection.
-    cid as int -- connection id
     """
     
 class ITransInd(metaclass=ABCMeta):
 
   @abstractmethod
-  def receive(self, cid, data):
+  def receive(self):
     """ Receive data from connection
-    cid as int -- connection id
-    data as byte
     """
 
   @abstractmethod
-  def new_connection_ind(self, cid):
+  def new_connection_ind(self):
     """ New connection 
-    cid as int -- connection id
     """
     
   @abstractmethod
-  def close_connection_ind(self, cid):
+  def close_connection_ind(self):
     """ Connection has closed.
-    cid as int -- connection id
     """
 
   @abstractmethod
-  def network_error(self, cid, code, reason):
+  def network_error(self):
     """ Error in network.
-    cid as int -- connection id
-    code as int
-    reason as str
     """
 
-  # do we need two errors?
   @abstractmethod
-  def transport_error(self, cid, code, reason):
-    """ 
-    cid as int -- connection id
-    code as int
-    reason as str
+  def transport_error(self):
+    """ Error in transport.
     """
