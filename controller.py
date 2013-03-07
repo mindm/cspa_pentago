@@ -39,6 +39,7 @@ class GameController:
             i += 1
 
         self.view.enable_grid()
+        self.view.set_infotext("Player 1 place marble")
         root.mainloop()
 
     # call from rotate button, rotate board on model and update GUI
@@ -53,6 +54,7 @@ class GameController:
         if self.state.getState() == "WAIT_P1_M_PLACE":
             self.game.place_marble(x, y, 1)
             self.state.setState("WAIT_P1_ROTATE")
+            self.view.set_infotext("Player 1 rotate")
             win = self.game.win_condition()
             if win != 0:
                 print ("Player {} won!".format(win))
@@ -60,6 +62,7 @@ class GameController:
         elif self.state.getState() == "WAIT_P2_M_PLACE":
             self.game.place_marble(x, y, 2)
             self.state.setState("WAIT_P2_ROTATE")
+            self.view.set_infotext("Player 2 rotate")
             win = self.game.win_condition()
             if win != 0:
                 print ("Player {} won!".format(win))
@@ -75,6 +78,7 @@ class GameController:
             try:
                 self.game.rotate_sub_board(*self.rotate_params[id])
                 self.state.setState("WAIT_P2_M_PLACE")
+                self.view.set_infotext("Player 2 place marble")
             except Exception as e:
                 print(e)
             win = self.game.win_condition()
@@ -85,6 +89,7 @@ class GameController:
             try:
                 self.game.rotate_sub_board(*self.rotate_params[id])
                 self.state.setState("WAIT_P1_M_PLACE")
+                self.view.set_infotext("Player 1 place marble")
             except Exception as e:
                 print(e)
             win = self.game.win_condition()
@@ -94,6 +99,7 @@ class GameController:
 
         board = self.game.get_board()
         self.view.update(board)
+
 
 
 def main():
