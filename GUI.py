@@ -2,6 +2,7 @@
 # -*- coding: iso-8859-15 -*-
 
 from tkinter import *
+from tkinter import messagebox
 import math
 
 #Quit method
@@ -158,6 +159,9 @@ class View(Toplevel):
 
     def set_infotext(self, text):
         self.infotext.config(text=text)
+
+    def popup(self, text):
+        messagebox.showinfo("Game Over", text)
     
 def main():
     root = Tk()
