@@ -10,7 +10,7 @@ from interfaces import IGameCommClientPdu, IGameCommServerPdu
 2 – game_end_pdu
 3 – invalid_move_pdu
 4 – your_turn_pdu
-5 – join_game_pdu
+5 – look_game_pdu
 6 – m_place_pdu
 7 – rotate_board_pdu
 """
@@ -23,104 +23,83 @@ class ClientPduCodec(IGameCommClientPdu):
     self.entity = entity
     self.rbuf = bytes()# read buffer
   
-  def new_game_pdu(self,peer_name, mark): # => return encoded binary data
-    msgtype = struct.pack("<h",0)
-    strdata = peer_name.encode("iso8859_15")
-    strsize = struct.pack("<h",len(strdata))
-    markdata = mark.encode("iso8859_15")
-    size = len(msgtype) + len(strdata) + len(strsize) + len(markdata) + 2 # as msgsize
-    msgsize = struct.pack("<h",size)
-    return msgsize + msgtype + strsize + strdata + markdata
+  def start_game_pdu(self):
+    msgtype = struct.pack("<I",0)
+    size = 2 + len(msgtype)
+    msgsize = struct.pack("<I",size)
+    return msgsize + msgtype
   
-  def board_info_pdu(self, board):
-    msgtype = struct.pack("<h",1)
+  def update_board_pdu(self, board_info):
+    msgtype = struct.pack("<I",1)
     boarddata = bytes()
-    for x in range(0,3):
-      for y in range(0,3):
-        boarddata += board[x][y].encode("iso8859_15")
+    for x in range(0,6):
+      for y in range(0,6):
+        boarddata += board_info[x][y].encode("iso8859_15")
     size = 2 + len(msgtype) + len(boarddata)   
-    msgsize = struct.pack("<h",size)
+    msgsize = struct.pack("<I",size)
     return msgsize + msgtype + boarddata
   
-  def error_pdu(self, code, reason):
-    msgtype = struct.pack("<h",2)
-    codedata = struct.pack("<h",code)
-    strdata = reason.encode("iso8859_15")
-    strsize = struct.pack("<h",len(strdata))
-    size = 2 + len(msgtype) + len(codedata) + len(strsize) + len(strdata)   
-    msgsize = struct.pack("<h",size)
-    return msgsize + msgtype + codedata + strsize + strdata
-  
-  def win_pdu(self, result):
-    msgtype = struct.pack("<h",3)
-    resultdata = struct.pack("<h",result)
+  def game_end_pdu(self, end_status):
+    msgtype = struct.pack("<I",2)
+    resultdata = struct.pack("<I",end_status)
     size = 2 + len(msgtype) + len(resultdata)   
-    msgsize = struct.pack("<h",size)
-    return msgsize + msgtype + resultdata    
-  
-  def your_turn_pdu(self):
-    msgtype = struct.pack("<h",6)
+    msgsize = struct.pack("<I",size)
+    return msgsize + msgtype + resultdata
+
+  def invalid_move_pdu(self):
+    msgtype = struct.pack("<I",3)
     size = 2 + len(msgtype)   
-    msgsize = struct.pack("<h",size)
+    msgsize = struct.pack("<I",size)
+    return msgsize + msgtype
+
+  def your_turn_pdu(self):
+    msgtype = struct.pack("<I",4)
+    size = 2 + len(msgtype)   
+    msgsize = struct.pack("<I",size)
     return msgsize + msgtype
   
   def decode(self,data): # => decode binary data and call resolved message
-    log.debug("decode({})".format(buf_debug(data)))
     ## handle read buffer
     self.rbuf = self.rbuf + data
     data = self.rbuf
     ## decode header 
     point = 0 
-    msgsize, = struct.unpack("<h", data[point:point+2]) # Remember tuple return
+    msgsize, = struct.unpack("<I", data[point:point+2]) # Remember tuple return
     point += 2 
-    msgtype, = struct.unpack("<h", data[point:point+2])
-    log.debug("decode(msgsize={},msgtype={})".format(msgsize,msgtype))
+    msgtype, = struct.unpack("<I", data[point:point+2])
     point += 2
     ## no we know message size, can remove it from read buffer
     self.rbuf = self.rbuf[msgsize:] # rest data
-    
-    ## 0 new_game_pdu
-    if msgtype == 0: 
-      strsize, = struct.unpack("<h", data[point:point+2])
-      point += 2
-      strdata = data[point:point+strsize]
-      point += strsize
-      peer_name = strdata.decode("iso8859_15")
-      markdata = data[point:point+1]
-      mark = markdata.decode("iso8859_15")
-      self.entity.new_game_pdu(peer_name,mark)
-      
-    ## 1 board_info_odu
-    elif msgtype == 1: 
-      board = list()
-      for x in range(0,3):
-        board.append(list())
-        for y in range(0,3):
-          board[x].append(None)
-      for i,byte in enumerate(data[point:point+9]):
-        y = i % 3
-        x = int(i / 3)
-        #log.debug("{}x{}".format(x,y))
-        board[x][y] = chr(byte)
-      self.entity.board_info_pdu(board)
-      
-    ## 2 error_pdu(self, code, reason):
-    elif msgtype == 2:
-      code, = struct.unpack("<h", data[point:point+2])
-      point += 2
-      strsize, = struct.unpack("<h", data[point:point+2])
-      point += 2
-      reason = data[point:point+strsize].decode("iso8859_15")
-      self.entity.error_pdu(code, reason)
-      
-    ## 3 win_pdu(self, result):
-    elif msgtype == 3:
-      result, = struct.unpack("<h", data[point:point+2])
-      point += 2
-      self.entity.win_pdu(result)
 
-    ## 6 your_turn_pdu(self):
-    elif msgtype == 6:
+    ## 0 start_game_pdu
+    if msgtype == 0: 
+      self.entity.start_game_pdu()
+      
+    ## 1 update_board_pdu
+    elif msgtype == 1: 
+      board_info = list()
+      for x in range(0,6):
+        board_info.append(list())
+        for y in range(0,6):
+          board_info[x].append(None)
+      for i,byte in enumerate(data[point:point+36]):
+        y = i % 6
+        x = int(i / 6)
+        board_info[x][y] = chr(byte)
+      self.entity.update_board_pdu(board_info)
+
+    ## 2 game_end_pdu(self, end_status):
+    elif msgtype == 2:
+      end_status, = struct.unpack("<I", data[point:point+2])
+      point += 2
+      self.entity.game_end_pdu(end_status)
+      
+    ## 3 invalid_move_pdu(self):
+    elif msgtype == 3:
+      self.entity.invalid_move_pdu()
+
+    ## 4 your_turn_pdu(self):
+    elif msgtype == 4:
       self.entity.your_turn_pdu()
 
     ## X unknown
@@ -132,46 +111,57 @@ class ServerPduCodec(IGameCommServerPdu):
   def __init__(self,entity):
     self.entity = entity  
   
-  def look_game_pdu(self, name):
-    msgtype = struct.pack("<h",4)
-    namedata = name.encode("iso8859_15")
-    strsize = struct.pack("<h",len(namedata))
-    size = len(msgtype) + len(strsize) + len(namedata)
-    msgsize = struct.pack("<h",size)
-    return msgsize + msgtype + strsize + namedata
+  def look_game_pdu(self, game_id):
+    msgtype = struct.pack("<I",5)
+    gamedata = resultdata = struct.pack("<I",game_id)
+    size = 2 + len(msgtype) + len(strsize) + len(gamedata)
+    msgsize = struct.pack("<I",size)
+    return msgsize + msgtype + gamedata
  
-  def move_pdu(self, x, y):
-    msgtype = struct.pack("<h",5)
-    xdata = struct.pack("<h",x)
-    ydata = struct.pack("<h",y)
-    size = len(msgtype) + len(xdata) + len(ydata)
-    msgsize = struct.pack("<h",size)
+  def m_place_pdu(self, x, y):
+    msgtype = struct.pack("<I",6)
+    xdata = struct.pack("<I",x)
+    ydata = struct.pack("<I",y)
+    size = 2 + len(msgtype) + len(xdata) + len(ydata)
+    msgsize = struct.pack("<I",size)
     return msgsize + msgtype + xdata + ydata
 
+  def rotate_board_pdu(self, board, direction):
+    msgtype = struct.pack("<I",7)
+    subboarddata = struct.pack("<I",board)
+    directiondata = struct.pack("<H",direction)
+    size = 2 + len(msgtype) + len(subboarddata) + len(directiondata)
+    msgsize = struct.pack("<I",size)
+    return msgsize + msgtype + subboarddata + directiondata
+
   def decode(self, cid, data): # => decode binary data and call resolved message
-    log.debug("decode({})".format(buf_debug(data)))
     point = 0 
-    msgsize, = struct.unpack("<h", data[point:point+2]) # Remember tuple return
+    msgsize, = struct.unpack("<I", data[point:point+2]) # Remember tuple return
     point += 2 
-    msgtype, = struct.unpack("<h", data[point:point+2])
-    log.debug("decode(msgsize={},msgtype={})".format(msgsize,msgtype))
+    msgtype, = struct.unpack("<I", data[point:point+2])
     point += 2
     
-    # look_game_pdu(self, name):
-    if msgtype == 4:
-      strsize, = struct.unpack("<h", data[point:point+2])
+    # look_game_pdu(self, game_id):
+    if msgtype == 5:
+      game_id, = struct.unpack("<I", data[point:point+2])
       point += 2
-      name = data[point:point+strsize].decode("iso8859_15")
-      point += strsize
-      self.entity.look_game_pdu(cid, name)
+      self.entity.look_game_pdu(game_id)
     
-    # move_pdu(self, x, y):
-    elif msgtype == 5:
-      x, = struct.unpack("<h", data[point:point+2])
+    # m_place_pdu(self, x, y):
+    elif msgtype == 6:
+      x, = struct.unpack("<I", data[point:point+2])
       point += 2
-      y, = struct.unpack("<h", data[point:point+2])
+      y, = struct.unpack("<I", data[point:point+2])
       point += 2
-      self.entity.move_pdu(cid, x, y)
+      self.entity.m_place_pdu(x, y)
+
+    # rotate_board_pdu(self, board, direction):
+    elif msgtype == 7:
+      board, = struct.unpack("<I", data[point:point+2])
+      point += 2
+      direction, = struct.unpack("<H", data[point:point+2])
+      point += 2
+      self.entity.rotate_board_pdu(board, direction)
 
     ## X unknown
     else:

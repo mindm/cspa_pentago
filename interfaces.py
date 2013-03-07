@@ -35,16 +35,16 @@ class IGameCommClientInd(metaclass=ABCMeta):
     """
 
   @abstractmethod
+  def update_board_ind(self, board_info):
+    """ Board update from server.
+    board_info as list  
+    """
+
+  @abstractmethod
   def game_end_ind(self, end_status):
     """ Game ends; win, lose or draw.
     end_status as uint32
     """       
- 
-  @abstractmethod
-  def update_board_ind(self, board_info):
-    """ Board update from server.
-    board_info as string  
-    """
 
   @abstractmethod
   def invalid_move_ind(self):
@@ -64,15 +64,15 @@ class IGameCommClientPdu(metaclass=ABCMeta):
     """
 
   @abstractmethod
-  def game_end_pdu(self, end_status):
-    """ PDU for end game information.
-    end_status as uint32
+  def update_board_pdu(self, board_info):
+    """ PDU for player move.
+    board_info as list
     """
 
   @abstractmethod
-  def update_board_pdu(self, board_info):
-    """ PDU for player move.
-    board_info as string
+  def game_end_pdu(self, end_status):
+    """ PDU for end game information.
+    end_status as uint32
     """
 
   @abstractmethod
@@ -98,7 +98,7 @@ class IGameCommServerReq(metaclass=ABCMeta):
   @abstractmethod
   def update_board_req(self, board_info):
     """ Game logic tells the server to send new board to client.
-    board_info as string
+    board_info as list
     """
 
   @abstractmethod
