@@ -8,8 +8,10 @@ from abc import ABCMeta, abstractmethod # http://docs.python.org/3/library/abc.h
 class IGameCommClientReq(metaclass=ABCMeta):
 
     @abstractmethod
-    def look_game_req(self, game_id):
+    def look_game_req(self, address, port, game_id):
         """ Player is looking for game.
+        address as str as ip/dns address
+        port as int
         game_id as uint32 
         """
       
@@ -150,47 +152,44 @@ class IGameCommServerPdu(metaclass=ABCMeta):
         """
 
 # Transport, Tcp Interfaces    
-    
+
+# parameters may be missing on wrong
+   
 class ITransReq(metaclass=ABCMeta):
   
     @abstractmethod
-    def send(self):
+    def send_req(self):
         """ Send data to peer.
         """
     
     @abstractmethod
-    def open_connection(self):
+    def open_connection_req(self):
         """ Open connection.
         """
 
     @abstractmethod
-    def close_connection(self):
+    def close_connection_req(self):
         """ Close connection.
         """
     
-class ITransInd(metaclass=ABCMeta):
-
+class ITransInd(metaclass=ABCMeta):  
+  
     @abstractmethod
-    def receive(self):
-        """ Receive data from connection
+    def networ_error_ind(self, port, errno, why):
+        """ Error in connection.
         """
 
     @abstractmethod
-    def new_connection_ind(self):
-        """ New connection 
-        """
-    
-    @abstractmethod
-    def close_connection_ind(self):
+    def close_connection_ind(self, port):
         """ Connection has closed.
         """
 
     @abstractmethod
-    def network_error(self):
-        """ Error in network.
+    def new_connection_ind(self, port):
+        """ New connection 
         """
-
+  
     @abstractmethod
-    def transport_error(self):
-        """ Error in transport.
+    def received_ind(self, port, data):
+        """ Received data from connection
         """
