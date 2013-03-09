@@ -6,7 +6,7 @@ import threading # http://docs.python.org/3/library/threading.html
 
 from model import GameLogic
 from interfaces import *
-from codecs import ClientPduCodec, ServerPduCodec
+from pdu_codecs import ClientPduCodec, ServerPduCodec
 
 class State: # default actions
     
