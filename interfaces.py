@@ -151,9 +151,9 @@ class IGameCommServerPdu(metaclass=ABCMeta):
         direction as uint8
         """
 
-# Transport, Tcp Interfaces    
+# Transport, TCP Interfaces    
 
-# parameters may be missing on wrong
+# parameters may be missing or wrong
    
 class ITransReq(metaclass=ABCMeta):
   
