@@ -3,16 +3,17 @@
 
 import sys
 from collections import defaultdict
-from model import GameLogic
+#from model import GameLogic
 from GUI import View
-from states import GameState
+#from states import GameState
 from tkinter import *
+from interfaces import *
 
 class GameController:
-    def __init__(self):
+    def __init__(self, client, tcp):
+
+        self.client = client 
         # create game board
-        self.game = GameLogic()
-        self.state = GameState()
 
         self.rotate_params = {  0: [0, 1],
                                 1: [0, 0],
@@ -22,6 +23,9 @@ class GameController:
                                 5: [2, 0],
                                 6: [3, 1],
                                 7: [3, 0] }
+    
+    # start new game
+    def new_game_ind():
 	    # create GUI
         root = Tk()
         self.view = View(root)
@@ -39,79 +43,37 @@ class GameController:
             i += 1
 
         self.view.enable_grid()
-        self.view.set_infotext("Player 1 place marble")
         root.mainloop()
 
-    # call from rotate button, rotate board on model and update GUI
-    #def rotate_call(self, board):
-        #self.rotate_sub_board(0, 0) #upper left sub-board to right - for testing
+    # your turn notification
+    def your_turn_ind():
+        self.view.set_infotext("Your turn")
 
+    # receive invalid move notification
+    def invalid_move_ind():
+        self.view.set_infotext("Invalid move")
+
+    # receive game end result
+    def game_end_ind(end_status):
+        self.view.popup("Player {} won!".format(win))
+
+    # update board with data received from communication layer
+    def update_board_ind(board_info):
+        self.view.update(board_info)
+
+    # place marble and send the data to communication layer
     def callback(self, id):
         x = id % 6
         y = int(id / 6)
         print("Clicked grid button {}, {}".format(x, y))
+        self.client.m_place_req(x, y)
 
-        if self.state.getState() == "WAIT_P1_M_PLACE":
-            self.game.place_marble(x, y, 1)
-            self.state.setState("WAIT_P1_ROTATE")
-            self.view.set_infotext("Player 1 rotate")
-            win = self.game.win_condition()
-            if win != 0:
-                print ("Player {} won!".format(win))
-                self.state.setState("STOP")
-                self.view.popup("Player {} won!".format(win))
-                self.view.set_infotext("Game over")
-        elif self.state.getState() == "WAIT_P2_M_PLACE":
-            self.game.place_marble(x, y, 2)
-            self.state.setState("WAIT_P2_ROTATE")
-            self.view.set_infotext("Player 2 rotate")
-            win = self.game.win_condition()
-            if win != 0:
-                print ("Player {} won!".format(win))
-                self.state.setState("STOP")
-                self.view.popup("Player {} won!".format(win))
-                self.view.set_infotext("Game over")
-        
-
-        board = self.game.get_board()
-        self.view.update(board)
-
+    # click rotate button and send the data to communication layer
     def rotate_callback(self, id):
         print("Clicked btn {}".format(id))
-        if self.state.getState() == "WAIT_P1_ROTATE":
-            try:
-                self.game.rotate_sub_board(*self.rotate_params[id])
-                self.state.setState("WAIT_P2_M_PLACE")
-                self.view.set_infotext("Player 2 place marble")
-            except Exception as e:
-                print(e)
-            win = self.game.win_condition()
-            if win != 0:
-                print ("Player {} won!".format(win))
-                self.state.setState("STOP")
-                self.view.popup("Player {} won!".format(win))
-                self.view.set_infotext("Game over")
-        if self.state.getState() == "WAIT_P2_ROTATE":
-            try:
-                self.game.rotate_sub_board(*self.rotate_params[id])
-                self.state.setState("WAIT_P1_M_PLACE")
-                self.view.set_infotext("Player 1 place marble")
-            except Exception as e:
-                print(e)
-            win = self.game.win_condition()
-            if win != 0:
-                print ("Player {} won!".format(win))
-                self.state.setState("STOP")
-                self.view.popup("Player {} won!".format(win))
-                self.view.set_infotext("Game over")
-
-        board = self.game.get_board()
-        self.view.update(board)
-
-
-
-def main():
-    newgame = GameController()
-
-if __name__ == "__main__":
-   main()
+        self.client.m_place_req(x, y)
+    
+    # make callback for exit-button
+    #def closeEvent(self,event):
+        #self.client.tcp.shutdown()
+        #sys.exit()

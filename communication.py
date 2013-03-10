@@ -37,11 +37,15 @@ class CommClient(IGameCommClientReq,IGameCommClientPdu, EntityMix):
         ## layers
         self.tcp = tcp
         self.port = None
+        self.ui = None
         self.codec_server = ServerPduCodec(self)
         self.codec_client = ClientPduCodec(self)
         ## variables
         self.save_game_id = None # Save game id between messages
         self.lock = threading.Lock()
+
+    def set_ui(self,ui):
+        self.ui = ui
 
     class State: # default actions
         
@@ -50,6 +54,7 @@ class CommClient(IGameCommClientReq,IGameCommClientPdu, EntityMix):
 
         # add methods with error-messages for each state
 
+    # waiting for game to starts
     class WAIT_UI_START(State):
 
         def look_game_req(self, ctx, address, port, game_id):
@@ -73,21 +78,12 @@ class CommClient(IGameCommClientReq,IGameCommClientPdu, EntityMix):
             ctx.port = None
             ctx.goto(ctx.WAIT_UI_START)
 
-    # waiting for game to starts
-    class WAIT_UI_START(State):
-
-        def look_game_req(self, ctx, address, port, game_id):
-            ctx.save_game_id = game_id
-            #data = ctx.codec_server.look_game_pdu(ctx.game_id)
-            #ctx.port.req_send(data) - request tcp-connection
-            ctx.goto(ctx.LOOK_GAME)
-
     # client waiting for connection to server
     class LOOK_GAME(State):
 
         # when second player found goto WAIT_MY_TURN
         def start_game_pdu(self, ctx):
-            # start_game_ind() - tell controller to start game
+            ctx.ui.start_game_ind()
             ctx.goto(ctx.WAIT_MYTURN)
 
     # player waiting for turn or server calculating changes
@@ -95,22 +91,22 @@ class CommClient(IGameCommClientReq,IGameCommClientPdu, EntityMix):
 
         # board is updated after opponent's m_place or rotate
         def update_board_pdu(self, ctx, board_info):
-            # update_board_ind(board_info) - tell controller to update board
+            ctx.ui.update_board_ind(board_info)
             ctx.goto(ctx.WAIT_MYTURN) 
 
         # player's turn starts or it's time to rotate
         def your_turn_pdu(self, ctx):
-            # your_turn_ind() - tell controller to inform about new turn
+            ctx.ui.your_turn_ind()
             ctx.goto(ctx.WAIT_UI)
 
         # game tells that the move was invalid
         def invalid_move_pdu(self, ctx):
-            # invalid_move_ind() - tell controller to inform about invalid move
+            ctx.ui.invalid_move_ind()
             ctx.goto(ctx.WAIT_UI)
 
         # game ends - victory, loss, or draw
         def game_end_pdu(self, ctx, end_status):
-            # game_end_ind(end_status) - tell controllet to inform about end
+            ctx.ui.game_end_ind(end_status)
             ctx.goto(ctx.WAIT_UI_START)            
 
     # client waiting for user input
@@ -124,7 +120,7 @@ class CommClient(IGameCommClientReq,IGameCommClientPdu, EntityMix):
 
         # board is updated after current user's input
         def update_board_pdu(self, ctx, board_info):
-            # update_board_ind(board_info) - tell controller to update board
+            ctx.ui.update_board_ind(board_info)
             ctx.goto(ctx.WAIT_UI)
 
         # user rotates board
@@ -209,7 +205,7 @@ class CommServer(IGameCommServerReq, IGameCommServerPdu, EntityMix):
             return self.__class__.__name__
 
         def close_connection_ind(self, port):
-            #ind.reset_ind() # reset game, not yet implemented
+            ind.reset_ind() # reset game
             goto(WAIT_PLAYER1)
 
         # add methods with error-messages for each state
@@ -237,23 +233,23 @@ class CommServer(IGameCommServerReq, IGameCommServerPdu, EntityMix):
 
         def game_end_req(self, ctx, end_status):
             if end_status == 1: # player 1 won
-                data = ctx.codec_client.win_pdu(end_status)
+                data = ctx.codec_client.game_end_pdu(end_status)
                 ctx.player1_port.req_send(data)
-                data = ctx.codec_client.win_pdu(end_status)
+                data = ctx.codec_client.game_end_pdu(end_status)
                 ctx.player2_port.req_send(data)
             elif end_status == 2: # player 2 won
-                data = ctx.codec_client.win_pdu(end_status)
+                data = ctx.codec_client.game_end_pdu(end_status)
                 ctx.player1_port.req_send(data)
-                data = ctx.codec_client.win_pdu(end_status)
+                data = ctx.codec_client.game_end_pdu(end_status)
                 ctx.player2_port.req_send(data)
             else: # draw
-                data = ctx.codec_client.win_pdu(end_status)
+                data = ctx.codec_client.game_end_pdu(end_status)
                 ctx.player1_port.req_send(data)
-                data = ctx.codec_client.win_pdu(end_status)
+                data = ctx.codec_client.game_end_pdu(end_status)
                 ctx.player2_port.req_send(data)
 
             # reset game
-            # ctx.ind.reset_ind() - not yet implemented
+            ctx.ind.reset_ind()
             # close connections
             ctx.close_connection_ind(None)  
             # new game
@@ -271,7 +267,7 @@ class CommServer(IGameCommServerReq, IGameCommServerPdu, EntityMix):
             else: # p2 disconnected, p1 won
                 data = ctx.codec_client.game_end_pdu(1)
                 ctx.player1_port.req_send(data)
-            #ctx.ind.reset_ind() # reset game - not yet implemented
+            ctx.ind.reset_ind() # reset game
             ctx.goto(ctx.WAIT_PLAYER1) # new game     
     
     class WAIT_P1_M_PLACE(WAIT_COMMAND):
@@ -296,7 +292,7 @@ class CommServer(IGameCommServerReq, IGameCommServerPdu, EntityMix):
                 ctx.player1_port.req_send(data)
             ctx.ind.rotate_sub_board(board,direction)
 
-        def nextturn_req(self,ctx): # controller calls
+        def nextturn_req(self,ctx):
             data = ctx.codec_client.your_turn_pdu()
             ctx.player2_port.req_send(data)
             ctx.goto(ctx.WAIT_P2_M_PLACE)
@@ -328,7 +324,7 @@ class CommServer(IGameCommServerReq, IGameCommServerPdu, EntityMix):
                 ctx.player2_port.req_send(data)
             ctx.ind.rotate_sub_board(board,direction)
 
-        def nextturn_req(self,ctx): # controller calls
+        def nextturn_req(self,ctx):
             data = ctx.codec_client.your_turn_pdu()
             ctx.player1_port.req_send(data)
             ctx.goto(ctx.WAIT_P1_M_PLACE)
@@ -396,21 +392,21 @@ class CommServers(ITransInd):
     """ Connection multiplexer to servers.
     Support only one server/game at the time. 
     """
-  
+
     def __init__(self,tcp):
         self.tcp = tcp
         self.server = CommServer(self,self.tcp)
         self.game = GameLogic(self.server)
         self.server.set_ind(self.game)
 
-    def ind_recv(self, port, data):
+    def received_ind(self, port, data):
         pass
 
-    def ind_connect(self, port):
+    def new_connection_ind(self, port):
         self.server.ind_connect(port)
 
-    def ind_close(self, port):
+    def close_connection_ind(self, port):
         pass
 
-    def ind_error(self, port, code, reason):
+    def network_error_ind(self, port, code, reason):
         pass

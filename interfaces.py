@@ -153,17 +153,15 @@ class IGameCommServerPdu(metaclass=ABCMeta):
 
 # Transport, TCP Interfaces    
 
-# parameters may be missing or wrong
-   
 class ITransReq(metaclass=ABCMeta):
   
     @abstractmethod
-    def send_req(self):
+    def send_req(self, data):
         """ Send data to peer.
         """
     
     @abstractmethod
-    def open_connection_req(self):
+    def open_connection_req(self, address, port):
         """ Open connection.
         """
 
