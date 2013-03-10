@@ -13,7 +13,7 @@ SIZE = 1024
 class ITransReq:
 
     def received_ind(self, port, data):
-        print(data)
+        print("{}: {}".format(port, data))
 
 
 
@@ -42,6 +42,8 @@ class TCPServer():
 
             self.game = ClientThread(client1, client2)
             self.game.start()
+            self.game.req_send(bytes("from server", "utf-8"), 1)
+            self.game.req_send(bytes("from server", "utf-8"), 2)
 
 
 
@@ -59,11 +61,12 @@ class TCPClient(ITransReq, threading.Thread):
     def open_connection(self, host):
         self.sock.connect(host)
 
-    def send(self, data):
+    def req_send(self, data):
         self.message_queues[self.sock].put(data)
         self.outputs.append(self.sock)
 
     def close_connection(self):
+        self.inputs.remove(self.sock)
         self.sock.close()
 
     def recv(self, size):
@@ -81,11 +84,12 @@ class TCPClient(ITransReq, threading.Thread):
         self.inputs.append(self.sock)
         self.message_queues[self.sock] = queue.Queue()
         self.set_ind(ITransReq())
-        print(self.message_queues)
 
         while self.inputs:
-            readable, writable, exceptional = select.select(self.inputs, self.outputs, self.inputs, 0)
-
+            try:
+                readable, writable, exceptional = select.select(self.inputs, self.outputs, self.inputs, 0)
+            except select.error:
+                pass
             for s in readable:
                 data = s.recv(1024)
                 if data:
@@ -97,16 +101,17 @@ class TCPClient(ITransReq, threading.Thread):
                     if s in self.outputs:
                         self.outputs.remove(s)
                     s.close()
-                    del message_queues[s]
+                    del self.message_queues[s]
 
             for s in writable:
                 try:
                     next_msg = self.message_queues[s].get_nowait()
                 except queue.Empty:
-                    #print("Error, queue empty")
+                    print("Error, queue empty")
                     pass
                 else:
                     print("sending message '{}' to {}".format(next_msg, s.getpeername()))
+                    self.outputs.remove(s)
                     s.send(next_msg)
 
 
@@ -124,21 +129,64 @@ class ClientThread(ITransReq, threading.Thread): #A server thread
         self.client2      = client2[0]
         self.client1_info = client1[1]
         self.client2_info = client2[1]
+        self.ind = None
+        self.inputs  = []
+        self.outputs = []
+        self.message_queues = {}
         super().__init__()
-
-    # def
 
 
     def run(self):
-        self.client1.send(bytes("init", "utf-8"))
-        
-        while 1:
-            data = self.client1.recv(1024)
-            if data:
-                self.client2.send(data)
-                print(data)
-            data = self.client2.recv(1024)
-            if data:
-                self.client1.send(data)
-                print(data)
 
+        self.inputs.append(self.client1)
+        self.inputs.append(self.client2)
+        self.message_queues[self.client1] = queue.Queue()
+        self.message_queues[self.client2] = queue.Queue()
+        self.set_ind(ITransReq())
+
+        while self.inputs:
+            try:
+                readable, writable, exceptional = select.select(self.inputs, self.outputs, self.inputs, 0)
+            except select.error:
+                pass
+            for s in readable:
+                data = s.recv(1024)
+                if data:
+                    print("received data '{}' from {}".format(data, s.getpeername()))
+                    self.ind.received_ind(s.getpeername()[1], data)
+                else:
+                    print("closing connection {}".format(s.getpeername()))
+                    self.inputs.remove(s)
+                    if s in self.outputs:
+                        self.outputs.remove(s)
+                    s.close()
+                    del self.message_queues[s]
+
+            for s in writable:
+                try:
+                    next_msg = self.message_queues[s].get_nowait()
+                except queue.Empty:
+                    print("Error, queue empty")
+                    pass
+                else:
+                    print("sending message '{}' to {}".format(next_msg, s.getpeername()))
+                    self.outputs.remove(s)
+                    s.send(next_msg)
+
+
+    def set_ind(self, commserver):
+        self.ind = commserver
+
+    def req_send(self, data, player):
+        if player == 1:
+            self.message_queues[self.client1].put(data)
+            self.outputs.append(self.client1)
+        elif player == 2:
+            self.message_queues[self.client2].put(data)
+            self.outputs.append(self.client2)
+
+    def close_connection(self):
+        self.client1.close()
+        self.client2.close()
+        self.inputs.remove(self.client1)
+        self.inputs.remove(self.client2)
