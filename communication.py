@@ -114,8 +114,8 @@ class CommClient(IGameCommClientReq,IGameCommClientPdu, EntityMix):
 
         # user places marble
         def m_place_req(self, ctx, x, y):
-            #data = ctx.codec_server.m_place_pdu(x, y)
-            #port.req_send(data) - request tcp-transfer
+            data = ctx.codec_server.m_place_pdu(x, y)
+            port.req_send(data) - request tcp-transfer
             ctx.goto(ctx.WAIT_UI)
 
         # board is updated after current user's input
@@ -125,8 +125,8 @@ class CommClient(IGameCommClientReq,IGameCommClientPdu, EntityMix):
 
         # user rotates board
         def rotate_board_req(self, ctx, board, direction):
-            #data = ctx.codec_server.rotate_board_pdu(x, y)
-            #port.req_send(data) - request tcp-transfer
+            data = ctx.codec_server.rotate_board_pdu(x, y)
+            port.req_send(data) - request tcp-transfer
             ctx.goto(ctx.WAIT_MYTURN)
 
 # Inputs that are sent to states
