@@ -175,8 +175,13 @@ class ITransReq(metaclass=ABCMeta):
 class ITransInd(metaclass=ABCMeta):  
   
     @abstractmethod
-    def networ_error_ind(self, port, errno, why):
-        """ Error in connection.
+    def received_ind(self, port, data):
+        """ Received data from connection
+        """
+
+    @abstractmethod
+    def new_connection_ind(self, port):
+        """ New connection 
         """
 
     @abstractmethod
@@ -185,11 +190,6 @@ class ITransInd(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def new_connection_ind(self, port):
-        """ New connection 
-        """
-  
-    @abstractmethod
-    def received_ind(self, port, data):
-        """ Received data from connection
+    def network_error_ind(self, port, errno, why):
+        """ Error in connection.
         """

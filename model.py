@@ -223,6 +223,7 @@ class GameLogic:
         if self.board[x][y] != 0:
             #print("Invalid move")
             return False
+            # implement error_req
         else:
             return True
         
