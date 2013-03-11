@@ -3,22 +3,21 @@
 
 import sys
 
-from transport import TCPServer
-from communications import CommClient
+from transport import TCPClient
+from communication import CommClient
 from controller import GameController
 
 def run():
-  ## create transport
-  tcp = TCPClient()
-  ## create game communication
-  client = CommClient(tcp)
-  ## create UI
-  ui = GameController(client,tcp)  
-  client.set_ui(ui)
-  ## main loop
-  tcp.start()
-  app.exec_()
+    ## create transport
+    tcp = TCPClient("localhost", 33345)
+    ## create game communication
+    client = CommClient(tcp)
+    ## create UI
+    ui = GameController(client,tcp)  
+    client.set_ui(ui)
+    ## main loop
+    tcp.start()
+    ui.new_game_ind()
   
 if __name__ == '__main__':
-  logging.basicConfig(level=logging.DEBUG)
-  run()
+    run()

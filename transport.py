@@ -7,16 +7,11 @@ import threading
 # from communication import CommClient
 import queue
 import select
+from communication import CommServer
+from model import GameLogic
+from interfaces import *
 
 SIZE = 1024
-
-class ITransReq:
-
-    def received_ind(self, port, data):
-        print("{}: {}".format(port, data))
-
-
-
 
 class TCPServer():
     def __init__(self, address, port):
@@ -42,8 +37,6 @@ class TCPServer():
 
             self.game = ClientThread(client1, client2)
             self.game.start()
-            self.game.req_send(bytes("from server", "utf-8"), 1)
-            self.game.req_send(bytes("from server", "utf-8"), 2)
 
 
 
@@ -58,19 +51,16 @@ class TCPClient(ITransReq, threading.Thread):
         self.message_queues = {}
         super().__init__()
 
-    def open_connection(self, host):
+    def req_open_connection(self, host):
         self.sock.connect(host)
 
     def req_send(self, data):
         self.message_queues[self.sock].put(data)
         self.outputs.append(self.sock)
 
-    def close_connection(self):
+    def req_close_connection(self):
         self.inputs.remove(self.sock)
         self.sock.close()
-
-    def recv(self, size):
-        return self.sock.recv(size)
 
     def set_ind(self, commclient):
         self.ind = commclient
@@ -79,11 +69,10 @@ class TCPClient(ITransReq, threading.Thread):
     # Uses select-module to distinguish if socket is readable or writable
     # source: http://pymotw.com/2/select/
     def run(self):
-        self.open_connection((self.address, self.port))
+        self.req_open_connection((self.address, self.port))
         self.sock.setblocking(0)
         self.inputs.append(self.sock)
         self.message_queues[self.sock] = queue.Queue()
-        self.set_ind(ITransReq())
 
         while self.inputs:
             try:
@@ -94,7 +83,7 @@ class TCPClient(ITransReq, threading.Thread):
                 data = s.recv(1024)
                 if data:
                     print("received data '{}' from {}".format(data, s.getpeername()))
-                    self.ind.received_ind(self.port, data)
+                    self.ind.received_ind(self.sock, data)
                 else:
                     print("closing connection {}".format(s.getpeername()))
                     self.inputs.remove(s)
@@ -142,7 +131,13 @@ class ClientThread(ITransReq, threading.Thread): #A server thread
         self.inputs.append(self.client2)
         self.message_queues[self.client1] = queue.Queue()
         self.message_queues[self.client2] = queue.Queue()
-        self.set_ind(ITransReq())
+
+        ## create server pool
+        self.server = CommServer(self, self.client1, self.client2)
+        ## create game
+        self.game = GameLogic(self.server)
+        self.set_ind(self.server)
+        self.server.set_ind(self.game)
 
         while self.inputs:
             try:
@@ -153,7 +148,7 @@ class ClientThread(ITransReq, threading.Thread): #A server thread
                 data = s.recv(1024)
                 if data:
                     print("received data '{}' from {}".format(data, s.getpeername()))
-                    self.ind.received_ind(s.getpeername()[1], data)
+                    self.ind.received_ind(data, s)
                 else:
                     print("closing connection {}".format(s.getpeername()))
                     self.inputs.remove(s)
@@ -173,19 +168,18 @@ class ClientThread(ITransReq, threading.Thread): #A server thread
                     self.outputs.remove(s)
                     s.send(next_msg)
 
+    def req_open_connection(self, host):
+        pass
 
     def set_ind(self, commserver):
         self.ind = commserver
 
     def req_send(self, data, player):
-        if player == 1:
-            self.message_queues[self.client1].put(data)
-            self.outputs.append(self.client1)
-        elif player == 2:
-            self.message_queues[self.client2].put(data)
-            self.outputs.append(self.client2)
+            self.message_queues[player].put(data)
+            self.outputs.append(player)
 
-    def close_connection(self):
+
+    def req_close_connection(self):
         self.client1.close()
         self.client2.close()
         self.inputs.remove(self.client1)

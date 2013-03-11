@@ -8,15 +8,11 @@ from communication import CommServer
 from model import GameLogic
 
 def run():
-  ## create transport
-  tcp = TCPServer()
-  ## create server pool
-  server = CommServer(tcp,10001)
-  ## create game
-  game = GameLogic(server)
-  server.set_ind(game)
-  ## close server by ctrl-c or eclipse red button
-  tcp.start()
+    ## create transport
+    tcp = TCPServer("localhost", 33345)
+    tcp.loop()
+    ## close server by ctrl-c or eclipse red button
+    #tcp.start()
   
 if __name__ == '__main__':
-  run()
+    run()

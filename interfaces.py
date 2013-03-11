@@ -8,11 +8,10 @@ from abc import ABCMeta, abstractmethod # http://docs.python.org/3/library/abc.h
 class IGameCommClientReq(metaclass=ABCMeta):
 
     @abstractmethod
-    def look_game_req(self, address, port, game_id):
+    def look_game_req(self):
         """ Player is looking for game.
         address as str as ip/dns address
         port as int
-        game_id as uint32 
         """
       
     @abstractmethod
@@ -132,9 +131,8 @@ class IGameCommServerInd(metaclass=ABCMeta):
 class IGameCommServerPdu(metaclass=ABCMeta):
   
     @abstractmethod
-    def look_game_pdu(self, game_id):
+    def look_game_pdu(self):
         """ Client looking for game.
-        game_id as uint32
         """
 
     @abstractmethod
@@ -156,17 +154,17 @@ class IGameCommServerPdu(metaclass=ABCMeta):
 class ITransReq(metaclass=ABCMeta):
   
     @abstractmethod
-    def send_req(self, data):
+    def req_send(self, data):
         """ Send data to peer.
         """
     
     @abstractmethod
-    def open_connection_req(self, address, port):
+    def req_open_connection(self, address, port):
         """ Open connection.
         """
 
     @abstractmethod
-    def close_connection_req(self):
+    def req_close_connection(self):
         """ Close connection.
         """
     

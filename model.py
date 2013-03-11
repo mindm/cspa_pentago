@@ -21,16 +21,15 @@ class Observable:
             func(self.pressed)
 
 class GameLogic:
-    def __init__(self): 
+    def __init__(self, server): 
         self.board = numpy.array([[ 0,  0,  0,  0,  0, 0],
                     [ 0,  0,  0,  0,  0, 0],
                     [ 0,  0,  0,  0,  0, 0],
                     [ 0,  0,  0,  0,  0, 0],
                     [ 0,  0,  0,  0,  0, 0],
                     [ 0,  0,  0,  0,  0, 0]])
-        self.trans_array = {0 : " ", 1 : "X", 2 : "O"}
+
         self.server = server
-        self.reset_ind()
 
     def reset_ind(self):
         ## init board 6x6
@@ -38,23 +37,20 @@ class GameLogic:
         for x in range(0,6):
             self.board.append(list())
             for y in range(0,6):
-                self.board[x].append(None)
+                self.board[x].append(0)
 
     def place_marble(self,x,y,color):
         if self.valid_move(y, x):
             self.board[y][x] = color
-
+            self.server.update_board_req(self.board)
             ## check win condition
             winner = self.win_condition()
             if winner != 0:
                 self.server.game_end_req(winner)
-            elif self.is_full():
-                self.server.game_end_req(" ")
-            else:
-                self.server.rotate_sub_board()
         else:
-            self.server.error_req()
-        self.server.update_board_req(self, board_info):
+            self.server.invalid_move_req()
+            return False
+        return True
 
     def rotate_sub_board(self, sub_board, direction):
         #rotate upper left corner
@@ -172,14 +168,15 @@ class GameLogic:
             else:
                 self.server.error_req()
 
-            ## check win condition
-            winner = self.win_condition()
-            if winner != 0:
-                self.server.game_end_req(winner)
-            elif self.is_full():
-                self.server.game_end_req(" ")
-            else:
-                self.server.nextturn_req()
+        ## check win condition
+        self.server.update_board_req(self.board)
+        winner = self.win_condition()
+        if winner != 0:
+            self.server.game_end_req(winner)
+        elif not self.is_full():
+            self.server.game_end_req(0)
+        else:
+            self.server.nextturn_req()
             
     def win_condition(self):
         #when five marbles of same color aling
@@ -261,10 +258,3 @@ class GameLogic:
 
     def print_board(self):
         print (self.board)
-
-    def get_board(self):
-        arr = []
-        for x in range(6):
-            for y in range(6):
-                arr.append(self.trans_array[self.board[x][y]])
-        return arr
