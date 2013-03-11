@@ -9,7 +9,7 @@ from controller import GameController
 
 def run():
   ## create transport
-  tcp = TCPServer()
+  tcp = TCPClient()
   ## create game communication
   client = CommClient(tcp)
   ## create UI

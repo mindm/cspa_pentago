@@ -115,7 +115,7 @@ class CommClient(IGameCommClientReq,IGameCommClientPdu, EntityMix):
         # user places marble
         def m_place_req(self, ctx, x, y):
             data = ctx.codec_server.m_place_pdu(x, y)
-            port.req_send(data) - request tcp-transfer
+            port.req_send(data)
             ctx.goto(ctx.WAIT_UI)
 
         # board is updated after current user's input

@@ -55,7 +55,7 @@ class GameController:
 
     # receive game end result
     def game_end_ind(end_status):
-        self.view.popup("Player {} won!".format(win))
+        self.view.popup("Player {} won!".format(end_status))
 
     # update board with data received from communication layer
     def update_board_ind(board_info):

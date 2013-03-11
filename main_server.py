@@ -9,7 +9,7 @@ from model import GameLogic
 
 def run():
   ## create transport
-  tcp = TCP2()
+  tcp = TCPServer()
   ## create server pool
   server = CommServer(tcp,10001)
   ## create game
