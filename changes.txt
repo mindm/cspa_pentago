@@ -1,0 +1,12 @@
+Changes 12.3.
+
++fixed codec buffer to check all the messages
++client closes connection on exit
++tested that server's ClientThread exits when connections are closed
++fixed an issue where rotating breaks the server when state is PLACE_M
++changed initial infotext to "Waiting player 2"
++fixed problem where one player had no indication of other player disconnecting from game
+
+
+bugs left:
+-place_m crashes server if in rotate state
