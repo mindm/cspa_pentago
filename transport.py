@@ -11,6 +11,8 @@ from communication import CommServer
 from model import GameLogic
 from interfaces import *
 
+
+
 SIZE = 1024
 
 class TCPServer():
@@ -59,7 +61,8 @@ class TCPClient(ITransReq, threading.Thread):
         self.outputs.append(self.sock)
 
     def req_close_connection(self):
-        self.inputs.remove(self.sock)
+        if self.sock in self.inputs:
+            self.inputs.remove(self.sock)
         self.sock.close()
 
     def set_ind(self, commclient):
@@ -141,7 +144,7 @@ class ClientThread(ITransReq, threading.Thread): #A server thread
 
         while self.inputs:
             try:
-                readable, writable, exceptional = select.select(self.inputs, self.outputs, self.inputs, 0)
+                readable, writable, exceptional = select.select(self.inputs, self.outputs, self.inputs, 1)
             except select.error:
                 pass
             for s in readable:
@@ -156,6 +159,7 @@ class ClientThread(ITransReq, threading.Thread): #A server thread
                         self.outputs.remove(s)
                     s.close()
                     del self.message_queues[s]
+                    self.ind.close_connection_ind(s)
 
             for s in writable:
                 try:
@@ -167,6 +171,9 @@ class ClientThread(ITransReq, threading.Thread): #A server thread
                     print("sending message '{}' to {}".format(next_msg, s.getpeername()))
                     self.outputs.remove(s)
                     s.send(next_msg)
+        #Thread exits
+        #print("Thread exit")
+
 
     def req_open_connection(self, host):
         pass
@@ -178,9 +185,9 @@ class ClientThread(ITransReq, threading.Thread): #A server thread
             self.message_queues[player].put(data)
             self.outputs.append(player)
 
-
     def req_close_connection(self):
         self.client1.close()
         self.client2.close()
-        self.inputs.remove(self.client1)
-        self.inputs.remove(self.client2)
+        self.inputs = []
+
+

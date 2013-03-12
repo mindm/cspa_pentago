@@ -7,6 +7,9 @@ from model import GameLogic
 from interfaces import *
 from pdu_codecs import ClientPduCodec, ServerPduCodec
 
+def wait():
+    print("debug wait")
+
 ## EntityMix
 
 class EntityMix:
@@ -178,7 +181,7 @@ class CommClient(IGameCommClientReq,IGameCommClientPdu, EntityMix):
         self._state.ind_connect(self, port)
 
     def close_connection_ind(self, port): 
-        self._state.ind_close(self, port)
+        self._state.close_connection_ind(self, port)
 
     def networ_error_ind(self, port, code, reason): 
         self._state.ind_error(self, port, code, reason)
@@ -214,9 +217,17 @@ class CommServer(IGameCommServerReq, IGameCommServerPdu, EntityMix):
         def name(self): 
             return self.__class__.__name__
 
-        def close_connection_ind(self, port):
-            ind.reset_ind() # reset game
-            goto(WAIT_PLAYER1)
+        def close_connection_ind(self, ctx, port):
+            if port == ctx.player1_port:
+                if ctx.player2_port:
+                    data = ctx.codec_client.game_end_pdu(2)
+                    ctx.tcp.req_send(data, ctx.player2_port)
+            else:
+                if ctx.player1_port:
+                    data = ctx.codec_client.game_end_pdu(1)
+                    ctx.tcp.req_send(data, ctx.player1_port)
+            #ind.reset_ind() # reset game
+            #goto(WAIT_PLAYER1)
 
         # add methods with error-messages for each state
 
@@ -271,15 +282,15 @@ class CommServer(IGameCommServerReq, IGameCommServerPdu, EntityMix):
             ctx.tcp.req_send(data, ctx.player2_port)
 
       
-        def close_connection_ind(self, ctx, port):
-            if port == ctx.player1_port: # p1 disconnected, p2 won
-                data = ctx.codec_client.game_end_pdu(2)
-                ctx.tcp.req_send(data, ctx.player2_port)
-            else: # p2 disconnected, p1 won
-                data = ctx.codec_client.game_end_pdu(1)
-                ctx.tcp.req_send(data, ctx.player1_port)
-            ctx.ind.reset_ind() # reset game
-            ctx.goto(ctx.WAIT_PLAYER1) # new game     
+        # def close_connection_ind(self, ctx, port):
+        #     if port == ctx.player1_port: # p1 disconnected, p2 won
+        #         data = ctx.codec_client.game_end_pdu(2)
+        #         ctx.tcp.req_send(data, ctx.player2_port)
+        #     else: # p2 disconnected, p1 won
+        #         data = ctx.codec_client.game_end_pdu(1)
+        #         ctx.tcp.req_send(data, ctx.player1_port)
+        #     ctx.ind.reset_ind() # reset game
+        #     ctx.goto(ctx.WAIT_PLAYER1) # new game     
     
     class WAIT_P1_M_PLACE(WAIT_COMMAND):
 
@@ -290,6 +301,13 @@ class CommServer(IGameCommServerReq, IGameCommServerPdu, EntityMix):
             check = ctx.ind.place_marble(x,y,1)
             if check == True: # move to next state if move was valid
                 ctx.goto(ctx.WAIT_P1_ROTATE)
+
+        def rotate_board_pdu(self, ctx, port, board, direction):
+            #if port != ctx.player1_port:
+                #data = ctx.codec_client.invalid_move_pdu()
+                #ctx.tcp.req_send(data, ctx.player1_port)
+            #ctx.ind.rotate_sub_board(board,direction)
+            self.invalid_move_req(ctx)
 
         def invalid_move_req(self, ctx):
             data = ctx.codec_client.invalid_move_pdu()
@@ -323,7 +341,10 @@ class CommServer(IGameCommServerReq, IGameCommServerPdu, EntityMix):
             check = ctx.ind.place_marble(x,y,2)
             if check == True: # move to next state if move was valid
                 ctx.goto(ctx.WAIT_P2_ROTATE)
-            
+
+        def rotate_board_pdu(self, ctx, port, board, direction):    
+            self.invalid_move_req(ctx)
+
         def invalid_move_req(self, ctx):
             data = ctx.codec_client.invalid_move_pdu()
             ctx.tcp.req_send(data, ctx.player2_port)
@@ -391,11 +412,8 @@ class CommServer(IGameCommServerReq, IGameCommServerPdu, EntityMix):
 
     def close_connection_ind(self, port):
         if port is not None:
-            self._state.ind_close(self, port)
-        if self.player1_port:
-            self.player1_port.req_close()
-        if self.player2_port:
-            self.player2_port.req_close()
+            self._state.close_connection_ind(self, port)
+        #self.tcp.req_close_connection()
         self.player1_port = None
         self.player2_port = None
 

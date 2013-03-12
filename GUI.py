@@ -95,7 +95,7 @@ class View(Toplevel):
 
         self.filemenu = Menu(self.menu)
         self.menu.add_cascade(label='File', menu=self.filemenu, background="#C4C4C4")
-        self.filemenu.add_command(label='Exit', command=lambda root=root:quit(root))
+        #self.filemenu.add_command(label='Exit', command=lambda root=root:quit(root))
 
 
         #creating rotate buttons
@@ -113,7 +113,7 @@ class View(Toplevel):
         self.infobar = Frame(root)
         self.infobar.pack(side=BOTTOM)
 
-        self.infotext = Label(self.infobar, text="Hi!")
+        self.infotext = Label(self.infobar, text="Waiting for Player 2")
         self.infotext.pack()
 
         #disable_buttons(btn_array)

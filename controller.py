@@ -12,6 +12,7 @@ class GameController:
 
         self.client = client 
         # create game board
+        self.tcp = tcp
 
         self.rotate_params = {  0: [0, 1],
                                 1: [0, 0],
@@ -40,9 +41,17 @@ class GameController:
             btn.config(command=lambda x=i: self.rotate_callback(x))
             i += 1
 
+        self.view.filemenu.add_command(label='Exit', command=lambda root=root:self.quit(root))
+
         self.view.enable_grid()
         self.client.look_game_req()
+        #Event handler for the Exit-event (user clicks 'x')
+        root.protocol("WM_DELETE_WINDOW", lambda root=root:self.quit(root))
         root.mainloop()
+
+    def quit(self, root):
+        self.tcp.req_close_connection()
+        root.destroy()
 
     def start_game_ind(self):
         self.view.set_infotext("Game starting")
@@ -75,7 +84,6 @@ class GameController:
     def callback(self, id):
         x = id % 6
         y = int(id / 6)
-        print("Clicked grid button {}, {}".format(x, y))
         self.client.m_place_req(x, y)
 
     # click rotate button and send the data to communication layer
