@@ -10,6 +10,7 @@ from model import GameLogic
 def run():
     ## create transport
     tcp = TCPServer("localhost", 33345)
+    print("Server is online")
     tcp.loop()
     ## close server by ctrl-c or eclipse red button
     #tcp.start()

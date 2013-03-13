@@ -7,6 +7,9 @@ Changes 12.3.
 +changed initial infotext to "Waiting player 2"
 +fixed problem where one player had no indication of other player disconnecting from game
 
+Changes 13.3
++client has an error message if server is not up
++fixed m_place crash
++fixed game end to show only once
 
 bugs left:
--place_m crashes server if in rotate state

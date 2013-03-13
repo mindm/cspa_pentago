@@ -6,6 +6,7 @@ import threading # http://docs.python.org/3/library/threading.html
 from model import GameLogic
 from interfaces import *
 from pdu_codecs import ClientPduCodec, ServerPduCodec
+import sys
 
 def wait():
     print("debug wait")
@@ -65,6 +66,9 @@ class CommClient(IGameCommClientReq,IGameCommClientPdu, EntityMix):
             data = ctx.codec_server.look_game_pdu()
             ctx.goto(ctx.LOOK_GAME)
             ctx.tcp.req_send(data)
+
+        def game_end_pdu(self, ctx, player):
+            sys.exit(0)
 
 #    class WAIT_CONN_IND(State):
 
@@ -226,10 +230,18 @@ class CommServer(IGameCommServerReq, IGameCommServerPdu, EntityMix):
                 if ctx.player1_port:
                     data = ctx.codec_client.game_end_pdu(1)
                     ctx.tcp.req_send(data, ctx.player1_port)
-            #ind.reset_ind() # reset game
-            #goto(WAIT_PLAYER1)
+
+        def m_place_pdu(self, ctx, port, x, y):
+            print("Wrong state")
 
         # add methods with error-messages for each state
+
+    class GAME_END(State):
+
+        def close_connection_ind(self, ctx, port):
+            pass
+
+
 
     class WAIT_PLAYER1(State):
     
@@ -269,12 +281,12 @@ class CommServer(IGameCommServerReq, IGameCommServerPdu, EntityMix):
                 #ctx.player2_port.req_send(data)
 
             # reset game
-            ctx.ind.reset_ind()
+            #ctx.ind.reset_ind()
             # close connections
             #ctx.close_connection_ind(None) - IMPLEMENT THIS  
             # new game
-            #ctx.goto(ctx.WAIT_PLAYER1)
-            print("Game end")    
+            ctx.goto(ctx.GAME_END)
+            print("Game end")
 
         def update_board_req(self, ctx, board_info):
             data = ctx.codec_client.update_board_pdu(board_info)

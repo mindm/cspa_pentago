@@ -17,7 +17,11 @@ def run():
     client.set_ui(ui)
     ## main loop
     tcp.start()
-    ui.new_game_ind()
+    tcp.join(0.5)
+    if tcp.isAlive():
+        ui.new_game_ind()
+    else:
+        print("Connection couldn't be established")
   
 if __name__ == '__main__':
     run()

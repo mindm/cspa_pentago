@@ -7,6 +7,7 @@ import threading
 # from communication import CommClient
 import queue
 import select
+import sys
 from communication import CommServer
 from model import GameLogic
 from interfaces import *
@@ -72,10 +73,18 @@ class TCPClient(ITransReq, threading.Thread):
     # Uses select-module to distinguish if socket is readable or writable
     # source: http://pymotw.com/2/select/
     def run(self):
-        self.req_open_connection((self.address, self.port))
-        self.sock.setblocking(0)
-        self.inputs.append(self.sock)
-        self.message_queues[self.sock] = queue.Queue()
+        #exception = None
+       # while exception == None:
+        try:
+            self.req_open_connection((self.address, self.port))
+            self.sock.setblocking(0)
+            self.inputs.append(self.sock)
+            self.message_queues[self.sock] = queue.Queue()
+           #exception = 1
+        except socket.error as e:
+           print(e)
+           #raise
+           #sys.exit(0)
 
         while self.inputs:
             try:
